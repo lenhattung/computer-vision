@@ -1,5 +1,8 @@
 import os
 from PIL import Image
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 def load_image(image_path):
     """
@@ -33,4 +36,26 @@ def get_image_list(folder_path):
                 img = load_image(file_path)
                 image_list.append(img)
     return image_list
-            
+
+def histogram_equalization(image, nbr_bins=256):
+    # Đảm bảo hình ảnh đầu vào là ảnh xám
+    if image.mode != 'L':
+        image = image.convert('L')
+    
+    # Chuyển đổi hình ảnh thành mảng NumPy
+    image_array = np.array(image)
+
+    # Tính toán histogram của ảnh
+    histogram, bins = np.histogram(image_array, bins=nbr_bins, range=(0, 256), density=True)
+
+    # Tính toán hàm phân phối tích luỹ (CDF - Cumulative Distribution Function)
+    cdf = histogram.cumsum()
+    cdf = 255 * cdf / cdf[-1]
+
+    # Lấy giá trị mới cho từng pixel dựa trên CDF
+    image_equalized = np.interp(image_array, bins[:-1], cdf)
+
+    # Chuyển đổi mảng kết quả thành hình ảnh
+    equalized_image = Image.fromarray(image_equalized.astype('uint8'))
+
+    return equalized_image
